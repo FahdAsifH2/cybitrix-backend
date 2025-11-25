@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import userModel from "./models/userModel.js"; // Add this import
 
 // Data structures
 const connectedUsers = new Map();
@@ -8,45 +9,92 @@ const gameRooms = new Map();
 // Socket.IO initialization
 const initializeSocket = (io) => {
   // Authentication middleware
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     const token = socket.handshake.auth.token;
 
-    if (!token) {
-      return next(new Error("Authentication error - No token provided"));
+    console.log(
+      "🔐 Authentication attempt - Token received:",
+      token ? `${token.substring(0, 20)}...` : "NONE"
+    );
+
+    if (!token || token === "demo-token") {
+      console.log("⚠️ No valid token, using demo mode");
+      socket.userData = { userId: socket.id, username: "Guest", name: "Guest" };
+      return next();
     }
 
     try {
+      // Decode the JWT token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      socket.userData = decoded;
+      console.log("✅ Token decoded:", decoded);
+
+      // Fetch user from database to get the name
+      // Your generateToken probably only stores the user ID
+      const user = await userModel.findById(
+        decoded.id || decoded.userId || decoded._id
+      );
+
+      if (user) {
+        socket.userData = {
+          userId: user._id.toString(),
+          username: user.name,
+          name: user.name,
+          email: user.email,
+        };
+        console.log("✅ User fetched from DB:", socket.userData);
+      } else {
+        console.log("⚠️ User not found in DB, using token data");
+        socket.userData = decoded;
+      }
+
       next();
     } catch (err) {
-      // For development/demo purposes
-      if (token === "demo-token") {
-        socket.userData = { userId: socket.id, username: "Guest" };
-        next();
-      } else {
-        next(new Error("Invalid token"));
-      }
+      console.log("⚠️ Token verification failed:", err.message);
+      console.log("🔧 Using demo mode");
+      socket.userData = { userId: socket.id, username: "Guest", name: "Guest" };
+      next();
     }
   });
 
   io.on("connection", (socket) => {
+    console.log("\n" + "=".repeat(50));
+    console.log("🔵 NEW CONNECTION");
+    console.log("📍 Socket ID:", socket.id);
     console.log(
-      `✅ User connected: ${socket.userData.username || socket.userData.name}`
+      "🔍 Raw socket.userData:",
+      JSON.stringify(socket.userData, null, 2)
     );
+
+    // Extract username from various possible fields
+    const username =
+      socket.userData.username ||
+      socket.userData.name ||
+      socket.userData.user?.username ||
+      socket.userData.user?.name ||
+      "Guest";
+
+    console.log(`✅ Final username extracted: "${username}"`);
 
     // Register user
     const userData = {
       id: socket.id,
-      userId: socket.userData.userId || socket.userData.id,
-      name: socket.userData.username || socket.userData.name,
+      userId: socket.userData.userId || socket.userData.id || socket.id,
+      name: username,
       status: "In Lobby",
     };
 
     connectedUsers.set(socket.id, userData);
 
+    console.log("📝 Stored user data:", JSON.stringify(userData, null, 2));
+    console.log("=".repeat(50) + "\n");
+
     // Send user their own data
     socket.emit("user-data", {
+      name: userData.name,
+      userId: userData.userId,
+    });
+
+    console.log("📤 Sent user-data to client:", {
       name: userData.name,
       userId: userData.userId,
     });

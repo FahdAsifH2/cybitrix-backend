@@ -1,9 +1,9 @@
 import express from "express";
 import dotenv from "dotenv";
+dotenv.config();
 import cors from "cors";
 import { createServer } from "http";
 import { Server } from "socket.io";
-dotenv.config();
 
 import connectDB from "./config/db.js";
 import homeRoutes from "./routes/routes.js";
