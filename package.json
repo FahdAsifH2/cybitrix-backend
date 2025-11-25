@@ -11,7 +11,7 @@
     "build": "npm install",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Moeez Ali",
+  "author": "Fahd Asif",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
