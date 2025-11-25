@@ -1,7 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-
+import { createServer } from "http";
+import { Server } from "socket.io";
 dotenv.config();
 
 import connectDB from "./config/db.js";
@@ -10,8 +11,19 @@ import authRoutes from "./routes/authRoutes.js";
 import protectRoutes from "./routes/protectRoutes.js";
 import { crossOrigin } from "./middlewares/corsMiddleware.js";
 import path from "path";
-
+import initializeSocket from "./socketHandler.js";
 const app = express();
+const httpServer = createServer(app);
+
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST"],
+  },
+});
+
+initializeSocket(io);
 
 // CORS
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
@@ -43,8 +55,8 @@ if (process.env.NODE_ENV === "production") {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server Started on Port: ${PORT}`);
-  console.log(`🚀 Backend running at: http://localhost:${PORT}`);
+  console.log(` Backend running at: http://localhost:${PORT}`);
   connectDB();
 });
