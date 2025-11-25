@@ -12,12 +12,27 @@ import protectRoutes from "./routes/protectRoutes.js";
 import { crossOrigin } from "./middlewares/corsMiddleware.js";
 import path from "path";
 import initializeSocket from "./socketHandler.js";
+
 const app = express();
 const httpServer = createServer(app);
 
+// Configure allowed origins based on environment
+const allowedOrigins =
+  process.env.NODE_ENV === "production"
+    ? [
+        process.env.CLIENT_PROD_URL,
+        // Your Vercel URLs
+        "https://cybitrix-frontend-b28y-git-main-fahds-projects-7ffffe31.vercel.app",
+        // Vercel also creates preview URLs, so allow all vercel.app domains from your project
+        "https://cybitrix-frontend-b28y.vercel.app",
+      ].filter(Boolean)
+    : ["http://localhost:3000", "http://localhost:5173"];
+
+console.log("🌐 Allowed CORS origins:", allowedOrigins);
+
 const io = new Server(httpServer, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST"],
   },
@@ -26,7 +41,12 @@ const io = new Server(httpServer, {
 initializeSocket(io);
 
 // CORS
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
 
 // Middlewares
 app.use(express.json());
@@ -49,14 +69,18 @@ if (process.env.NODE_ENV === "production") {
   });
 } else {
   app.get("/", (req, res) => {
-    res.send("API is up and running!");
+    res.send("API is up and running! 🚀");
   });
 }
 
 const PORT = process.env.PORT || 5000;
 
 httpServer.listen(PORT, () => {
-  console.log(`Server Started on Port: ${PORT}`);
-  console.log(` Backend running at: http://localhost:${PORT}`);
+  console.log(`🚀 Server Started on Port: ${PORT}`);
+  console.log(`📡 Backend running at: http://localhost:${PORT}`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+  console.log(
+    `🔐 JWT_SECRET is ${process.env.JWT_SECRET ? "LOADED ✅" : "MISSING ❌"}`
+  );
   connectDB();
 });
