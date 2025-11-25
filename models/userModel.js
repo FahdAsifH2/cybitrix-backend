@@ -19,31 +19,22 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  verificationToken: {
-    type: String,
-  },
-  verificationTokenExpires: {
-    type: Date,
-  },
-  newEmail: {
-    type: String,
-  },
-  newEmailToken: {
-    type: String,
-  },
-  newEmailExpires: {
-    type: Date,
-  },
-  forgetPasswordToken: {
-    type: String,
-  },
-  forgetPasswordExpires: {
-    type: Date,
-  },
+  verificationToken: String,
+  verificationTokenExpires: Date,
+  newEmail: String,
+  newEmailToken: String,
+  newEmailExpires: Date,
+  forgetPasswordToken: String,
+  forgetPasswordExpires: Date,
+  // Game fields
+  wins: { type: Number, default: 0 },
+  losses: { type: Number, default: 0 },
+  isOnline: { type: Boolean, default: false },
+  socketId: String,
 });
 
 userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next(); //return if password is not modified
+  if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
   this.password = await bcrypt.hash(this.password, salt);
   next();

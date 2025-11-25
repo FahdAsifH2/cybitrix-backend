@@ -19,8 +19,11 @@ import {
 
 const sendEmailNotification = async (to, subject, message) => {
   try {
+    console.log("📧 Sending email to:", to);
     await sendEmail(to, subject, message);
+    console.log("✅ Email sent successfully");
   } catch (error) {
+    console.log("❌ Email Error:", error.message);
     throw new Error(error.message);
   }
 };
@@ -28,14 +31,15 @@ const sendEmailNotification = async (to, subject, message) => {
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    console.log(name, email, password);
 
     if (!name || !email || !password) {
       throw new Error("Please give name, email and password. 🥸");
     }
+
     const now = new Date();
-    const userExists = await userModel.findOne({
-      email: email,
-    });
+    const userExists = await userModel.findOne({ email: email });
+
     if (userExists?.isVerified === true) {
       throw new Error("User already exists. 🙁");
     } else if (userExists?.verificationTokenExpires > now) {
@@ -53,9 +57,27 @@ const registerUser = async (req, res) => {
     });
 
     await user.save();
-    const message = emailVerificationMessage(user);
-    await sendEmailNotification(user.email, message.subject, message.body);
 
+    // Send email BEFORE responding
+    const message = emailVerificationMessage(user);
+
+    try {
+      await sendEmailNotification(user.email, message.subject, message.body);
+    } catch (emailError) {
+      // Log the error but don't throw - user is already created
+      console.log("❌ Failed to send verification email:", emailError.message);
+      // Optionally: delete the user or mark email as failed
+      // await userModel.findByIdAndDelete(user._id);
+
+      return res.status(500).send({
+        msg: {
+          title: "Account created but email failed to send",
+          desc: "Please contact support or try resending verification email.",
+        },
+      });
+    }
+
+    // Only send response ONCE
     return res.status(200).send({
       user: {
         _id: user._id,
@@ -70,7 +92,10 @@ const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(400).send({ msg: { title: error.message } });
+    // Make sure we haven't already sent a response
+    if (!res.headersSent) {
+      res.status(400).send({ msg: { title: error.message } });
+    }
   }
 };
 
@@ -211,7 +236,7 @@ const changeEmail = async (req, res) => {
         await sendEmailNotification(
           user.newEmail,
           message.subject,
-          message.body,
+          message.body
         );
 
         res.status(200).send({

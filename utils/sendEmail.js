@@ -1,6 +1,18 @@
 import nodemailer from "nodemailer";
 
 const sendEmail = async (to, subject, html) => {
+  // DEBUG: Check credentials
+  console.log("🔍 DEBUG - EMAIL_USER:", process.env.EMAIL_USER);
+  console.log("🔍 DEBUG - EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
+  console.log(
+    "🔍 DEBUG - All env keys:",
+    Object.keys(process.env).filter((k) => k.includes("EMAIL"))
+  );
+
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    throw new Error("❌ EMAIL CREDENTIALS NOT LOADED FROM .env FILE!");
+  }
+
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -17,9 +29,12 @@ const sendEmail = async (to, subject, html) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    const info = await transporter.sendMail(mailOptions);
+    console.log("📨 Email sent:", info.messageId);
+    return info;
   } catch (error) {
-    throw new Error("Error Sending Email.");
+    console.error("❌ Email send failed:", error);
+    throw new Error(`Email failed: ${error.message}`);
   }
 };
 

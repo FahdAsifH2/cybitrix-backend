@@ -1,7 +1,22 @@
 import express from "express";
 import dotenv from "dotenv";
+import cors from "cors";
+
 dotenv.config();
-console.log("MONGO_URI:", process.env.MONGO_URI); // Debug line
+
+// ADD THIS DEBUG SECTION - VERY IMPORTANT
+console.log("====== ENVIRONMENT VARIABLES CHECK ======");
+console.log("MONGO_URI:", process.env.MONGO_URI);
+console.log("PORT:", process.env.PORT);
+console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log(
+  "EMAIL_PASS:",
+  process.env.EMAIL_PASS
+    ? "✅ LOADED (length: " + process.env.EMAIL_PASS.length + ")"
+    : "❌ NOT LOADED"
+);
+console.log("NODE_ENV:", process.env.NODE_ENV);
+console.log("=========================================");
 
 import connectDB from "./config/db.js";
 import homeRoutes from "./routes/routes.js";
@@ -12,7 +27,10 @@ import path from "path";
 
 const app = express();
 
-//!Middlewares
+// CORS
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+
+// Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 crossOrigin(app);
