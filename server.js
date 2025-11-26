@@ -19,18 +19,36 @@ const httpServer = createServer(app);
 // Configure allowed origins based on environment
 const allowedOrigins =
   process.env.NODE_ENV === "production"
-    ? [
-        "https://cybitrix-frontend-b28y.vercel.app",
-        "https://cybitrix-frontend-b28y-git-main-fahds-projects-7ffffe31.vercel.app",
-        "https://cybitrix-frontend-b28y-fahds-projects-7ffffe31.vercel.app", // 👈 Ye add karo
-      ]
+    ? (origin, callback) => {
+        // Allow all Vercel URLs for your project
+        if (
+          !origin ||
+          origin.includes("cybitrix-frontend") ||
+          origin.includes("vercel.app")
+        ) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      }
     : ["http://localhost:3000", "http://localhost:5173"];
 
-console.log("🌐 Allowed CORS origins:", allowedOrigins);
+console.log("🌐 CORS enabled for Vercel domains");
 
 const io = new Server(httpServer, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        origin.includes("cybitrix-frontend") ||
+        origin.includes("vercel.app") ||
+        origin.includes("localhost")
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST"],
   },
@@ -41,7 +59,18 @@ initializeSocket(io);
 // CORS
 app.use(
   cors({
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      if (
+        !origin ||
+        origin.includes("cybitrix-frontend") ||
+        origin.includes("vercel.app") ||
+        origin.includes("localhost")
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
