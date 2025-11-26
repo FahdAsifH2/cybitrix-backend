@@ -1,28 +1,32 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend("re_DgP2ogJT_DEvBdggHcZDz6mLPdBRGc12h");
+// Configure your SMTP settings
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com", // Change to your SMTP host (e.g., smtp.sendgrid.net, smtp.mailgun.org)
+  port: 587, // 587 for TLS, 465 for SSL
+  secure: false, // true for 465, false for other ports
+  auth: {
+    user: "your-email@gmail.com", // Your SMTP username/email
+    pass: "your-app-password", // Your SMTP password or app-specific password
+  },
+});
 
 const sendEmail = async (to, subject, html) => {
-  console.log("📧 Sending email via Resend to:", to);
+  console.log("📧 Sending email via SMTP to:", to);
 
   try {
-    const { data, error } = await resend.emails.send({
-      from: "Cybitrix <onboarding@resend.dev>",
-      to: [to],
+    const info = await transporter.sendMail({
+      from: '"Cybitrix" <your-email@gmail.com>', // Sender name and address
+      to,
       subject,
       html,
     });
 
-    if (error) {
-      console.error("❌ Resend error:", error);
-      throw error;
-    }
-
-    console.log("✅ Email sent successfully via Resend:", data.id);
-    return data;
+    console.log("✅ Email sent successfully via SMTP:", info.messageId);
+    return info;
   } catch (error) {
-    console.error("❌ Resend failed:", error);
-    throw new Error(`Resend failed: ${error.message}`);
+    console.error("SMTP failed:", error);
+    throw new Error(`SMTP failed: ${error.message}`);
   }
 };
 
