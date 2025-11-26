@@ -72,7 +72,7 @@ if (process.env.NODE_ENV === "production") {
     res.send("API is up and running! 🚀");
   });
 }
-
+console.log("helo");
 const PORT = process.env.PORT || 5000;
 
 httpServer.listen(PORT, () => {
