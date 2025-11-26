@@ -22,6 +22,7 @@ const allowedOrigins =
     ? [
         "https://cybitrix-frontend-b28y.vercel.app",
         "https://cybitrix-frontend-b28y-git-main-fahds-projects-7ffffe31.vercel.app",
+        "https://cybitrix-frontend-b28y-fahds-projects-7ffffe31.vercel.app", // 👈 Ye add karo
       ]
     : ["http://localhost:3000", "http://localhost:5173"];
 
