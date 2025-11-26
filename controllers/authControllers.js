@@ -31,7 +31,11 @@ const sendEmailNotification = async (to, subject, message) => {
 const registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
-    console.log(name, email, password);
+    console.log("📝 Registration Request:", {
+      name,
+      email,
+      hasPassword: !!password,
+    });
 
     if (!name || !email || !password) {
       throw new Error("Please give name, email and password. 🥸");
@@ -40,11 +44,23 @@ const registerUser = async (req, res) => {
     const now = new Date();
     const userExists = await userModel.findOne({ email: email });
 
+    console.log("🔍 User Check:", {
+      exists: !!userExists,
+      isVerified: userExists?.isVerified,
+      tokenExpires: userExists?.verificationTokenExpires,
+      now: now,
+    });
+
     if (userExists?.isVerified === true) {
+      console.log("❌ User already verified");
       throw new Error("User already exists. 🙁");
     } else if (userExists?.verificationTokenExpires > now) {
-      throw new Error("User already exists. 🙁");
+      console.log("❌ User exists with valid token");
+      throw new Error(
+        "User already exists with pending verification. Please check your email or wait for token to expire. 🙁"
+      );
     } else if (userExists?.verificationTokenExpires < now) {
+      console.log("🗑️ Deleting expired user");
       await userModel.findByIdAndDelete(userExists._id);
     }
 
@@ -57,17 +73,16 @@ const registerUser = async (req, res) => {
     });
 
     await user.save();
+    console.log("✅ User saved to database:", user._id);
 
-    // Send email BEFORE responding
+    // Send email AFTER user is saved
     const message = emailVerificationMessage(user);
 
     try {
       await sendEmailNotification(user.email, message.subject, message.body);
+      console.log("✅ Verification email sent successfully");
     } catch (emailError) {
-      // Log the error but don't throw - user is already created
       console.log("❌ Failed to send verification email:", emailError.message);
-      // Optionally: delete the user or mark email as failed
-      // await userModel.findByIdAndDelete(user._id);
 
       return res.status(500).send({
         msg: {
@@ -78,6 +93,7 @@ const registerUser = async (req, res) => {
     }
 
     // Only send response ONCE
+    console.log("✅ Sending success response to frontend");
     return res.status(200).send({
       user: {
         _id: user._id,
@@ -92,7 +108,7 @@ const registerUser = async (req, res) => {
       },
     });
   } catch (error) {
-    // Make sure we haven't already sent a response
+    console.error("❌ Registration Error:", error.message);
     if (!res.headersSent) {
       res.status(400).send({ msg: { title: error.message } });
     }
