@@ -22,6 +22,7 @@
     "mongoose": "^8.5.0",
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.14",
+    "resend": "^6.5.2",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
