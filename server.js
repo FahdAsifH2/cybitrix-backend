@@ -20,12 +20,9 @@ const httpServer = createServer(app);
 const allowedOrigins =
   process.env.NODE_ENV === "production"
     ? [
-        process.env.CLIENT_PROD_URL,
-        // Your Vercel URLs
-        "https://cybitrix-frontend-b28y-git-main-fahds-projects-7ffffe31.vercel.app",
-        // Vercel also creates preview URLs, so allow all vercel.app domains from your project
         "https://cybitrix-frontend-b28y.vercel.app",
-      ].filter(Boolean)
+        "https://cybitrix-frontend-b28y-git-main-fahds-projects-7ffffe31.vercel.app",
+      ]
     : ["http://localhost:3000", "http://localhost:5173"];
 
 console.log("🌐 Allowed CORS origins:", allowedOrigins);
@@ -60,7 +57,7 @@ const __dirname1 = path.resolve();
 app.get("/", (req, res) => {
   res.send("API is up and running! 🚀");
 });
-console.log("helo");
+
 const PORT = process.env.PORT || 5000;
 
 httpServer.listen(PORT, () => {
