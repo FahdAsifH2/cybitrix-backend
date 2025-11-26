@@ -75,24 +75,21 @@ const registerUser = async (req, res) => {
     await user.save();
     console.log("✅ User saved to database:", user._id);
 
-    // Send email AFTER user is saved
+    // Send email (non-blocking)
     const message = emailVerificationMessage(user);
+    let emailSent = false;
 
     try {
+      console.log("📧 Attempting to send email...");
       await sendEmailNotification(user.email, message.subject, message.body);
+      emailSent = true;
       console.log("✅ Verification email sent successfully");
     } catch (emailError) {
-      console.log("❌ Failed to send verification email:", emailError.message);
-
-      return res.status(500).send({
-        msg: {
-          title: "Account created but email failed to send",
-          desc: "Please contact support or try resending verification email.",
-        },
-      });
+      console.error("⚠️ Email send failed:", emailError.message);
+      // Don't throw error - user is already created
     }
 
-    // Only send response ONCE
+    // ✅ ALWAYS return success response (user created successfully)
     console.log("✅ Sending success response to frontend");
     return res.status(200).send({
       user: {
@@ -103,9 +100,12 @@ const registerUser = async (req, res) => {
         token: generateToken(user._id),
       },
       msg: {
-        title: "You are signed up! 🤟🏻",
-        desc: "Please verify your account to continue.",
+        title: emailSent ? "You are signed up! 🤟🏻" : "Account created! ⚠️",
+        desc: emailSent
+          ? "Please check your email for verification code."
+          : "Verification email could not be sent. Please contact support or try to resend.",
       },
+      emailSent, // Frontend can check this
     });
   } catch (error) {
     console.error("❌ Registration Error:", error.message);
@@ -114,7 +114,6 @@ const registerUser = async (req, res) => {
     }
   }
 };
-
 const verifyToken = async (req, res) => {
   try {
     if (req.user.isVerified) throw new Error("User already verified. 🤨");

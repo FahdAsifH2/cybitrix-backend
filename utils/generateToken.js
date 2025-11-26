@@ -14,7 +14,8 @@ const generateToken = (id, rememberMe = 0) => {
 
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: time });
   //                      ^^^^^^^^^^^^^^^^^^^^^^
-  //                      ✅ YE SAHI HAI!
+  //                    
 };
 
-export default generateToken;
+export default 
+;

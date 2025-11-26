@@ -1,30 +1,26 @@
 import nodemailer from "nodemailer";
 
 const sendEmail = async (to, subject, html) => {
-  // DEBUG: Check credentials
   console.log("🔍 DEBUG - EMAIL_USER:", process.env.EMAIL_USER);
   console.log("🔍 DEBUG - EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
 
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error("❌ EMAIL CREDENTIALS NOT LOADED FROM .env FILE!");
+    throw new Error("❌ EMAIL CREDENTIALS NOT LOADED!");
   }
 
+  // ✅ TRY PORT 465 with SSL instead of 587 with TLS
   const transporter = nodemailer.createTransport({
-    service: "gmail",
     host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // Use TLS
+    port: 465, // Changed from 587
+    secure: true, // Changed from false (use SSL)
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-    tls: {
-      rejectUnauthorized: false,
-    },
-    // Add timeout settings
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
+    // Remove TLS config when using SSL
+    connectionTimeout: 20000, // Increased to 20 seconds
+    greetingTimeout: 20000,
+    socketTimeout: 20000,
   });
 
   const mailOptions = {
@@ -35,12 +31,13 @@ const sendEmail = async (to, subject, html) => {
   };
 
   try {
-    console.log("📧 Sending email to:", to);
+    console.log("📧 Attempting to send email via SSL (port 465)...");
     const info = await transporter.sendMail(mailOptions);
     console.log("✅ Email sent successfully:", info.messageId);
     return info;
   } catch (error) {
     console.error("❌ Email send failed:", error.message);
+    console.error("   Error code:", error.code);
     throw new Error(`Email failed: ${error.message}`);
   }
 };
